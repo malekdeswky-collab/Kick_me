@@ -257,13 +257,46 @@
             const message = document.getElementById('chatInput').value.trim();
             if (!name || !message) return;
 
+            // Get existing messages from localStorage
+            let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+            
+            // Add new message
+            messages.push({
+                name: name,
+                message: message,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+            
+            // Display the new message
+            displayMessage(name, message);
+            document.getElementById('chatInput').value = '';
+        }
+
+        function displayMessage(name, message) {
             const chatMessages = document.getElementById('chatMessages');
             const messageElement = document.createElement('div');
             messageElement.className = 'chat-message';
             messageElement.innerHTML = `<strong>${escapeHtml(name)}</strong>: ${escapeHtml(message)}`;
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            document.getElementById('chatInput').value = '';
+        }
+
+        function loadChatMessages() {
+            const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'chat-message';
+                messageElement.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.message)}`;
+                chatMessages.appendChild(messageElement);
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         function escapeHtml(text) {
@@ -275,8 +308,8 @@
                 .replace(/'/g, '&#039;');
         }
 
-        
-
+        // Load messages when page loads
+        document.addEventListener('DOMContentLoaded', loadChatMessages);
         
     </script>
 </body>
