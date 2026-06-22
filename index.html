@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kick me</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20200%20200'%3E%3Crect%20width='100%25'%20height='100%25'%20fill='%230b0000'/%3E%3Ctext%20x='50%25'%20y='45%25'%20text-anchor='middle'%20font-size='42'%20font-family='Impact,Arial%20Black,sans-serif'%20fill='%23ff0000'%20font-weight='700'%20stroke='%233b0000'%20stroke-width='2'%3EKICK%3C/text%3E%3Ctext%20x='50%25'%20y='85%25'%20text-anchor='middle'%20font-size='32'%20font-family='Impact,Arial%20Black,sans-serif'%20fill='%23ff0000'%20font-weight='700'%20stroke='%233b0000'%20stroke-width='2'%3EME%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <style>
         body {
             display: flex;
@@ -242,6 +245,41 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjK5K5K5K5K5K5K5K5K5K5K5K5K5K5K5",
+            authDomain: "kickme-chat-abc123.firebaseapp.com",
+            databaseURL: "https://kickme-chat-abc123-default-rtdb.firebaseio.com",
+            projectId: "kickme-chat-abc123",
+            storageBucket: "kickme-chat-abc123.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdefghijklmnop"
+        };
+
+        // Initialize Firebase (will be replaced with actual config)
+        let db = null;
+        let isFirebaseReady = false;
+
+        // Try to initialize Firebase if config is available
+        try {
+            if (firebaseConfig.apiKey !== "AIzaSyDjK5K5K5K5K5K5K5K5K5K5K5K5K5K5K5") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                isFirebaseReady = true;
+                loadChatMessages();
+            } else {
+                console.log("Firebase config not set. Chat will use local storage.");
+                useLocalStorage = true;
+                loadChatMessagesLocal();
+            }
+        } catch (error) {
+            console.log("Using local storage fallback: " + error);
+            useLocalStorage = true;
+            loadChatMessagesLocal();
+        }
+
+        let useLocalStorage = false;
+
         function kickMe(url) {
             window.location.href = url;
         }
@@ -257,21 +295,26 @@
             const message = document.getElementById('chatInput').value.trim();
             if (!name || !message) return;
 
-            // Get existing messages from localStorage
-            let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
-            
-            // Add new message
-            messages.push({
-                name: name,
-                message: message,
-                timestamp: new Date().toLocaleString()
-            });
-            
-            // Save to localStorage
-            localStorage.setItem('chatMessages', JSON.stringify(messages));
-            
-            // Display the new message
-            displayMessage(name, message);
+            if (isFirebaseReady) {
+                // Save to Firebase
+                const messagesRef = db.ref('messages');
+                messagesRef.push({
+                    name: name,
+                    message: message,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                // Save to local storage
+                let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+                messages.push({
+                    name: name,
+                    message: message,
+                    timestamp: new Date().toLocaleString()
+                });
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+                displayMessage(name, message);
+            }
+
             document.getElementById('chatInput').value = '';
         }
 
@@ -285,6 +328,28 @@
         }
 
         function loadChatMessages() {
+            if (isFirebaseReady) {
+                const messagesRef = db.ref('messages');
+                messagesRef.on('value', (snapshot) => {
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.innerHTML = '';
+                    
+                    const data = snapshot.val();
+                    if (data) {
+                        Object.values(data).forEach(msg => {
+                            const messageElement = document.createElement('div');
+                            messageElement.className = 'chat-message';
+                            messageElement.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.message)}`;
+                            chatMessages.appendChild(messageElement);
+                        });
+                    }
+                    
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            }
+        }
+
+        function loadChatMessagesLocal() {
             const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.innerHTML = '';
@@ -309,8 +374,11 @@
         }
 
         // Load messages when page loads
-        document.addEventListener('DOMContentLoaded', loadChatMessages);
-        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isFirebaseReady) {
+                loadChatMessagesLocal();
+            }
+        });
     </script>
 </body>
 </html>
