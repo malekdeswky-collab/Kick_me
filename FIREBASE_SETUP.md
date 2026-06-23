@@ -27,14 +27,18 @@ Your app is ready to use a **global chat** that everyone can see! Follow these s
    - `messagingSenderId`
    - `appId`
 
-## Step 4: Update index.html
-1. Open `index.html` in VS Code
-2. Find this section near the top (around line 8):
+## Step 4: Update kick_me.html
+1. Open `kick_me.html` in VS Code
+2. Find the `firebaseConfig` object near the bottom of the file (in the module script)
    ```javascript
    const firebaseConfig = {
-       apiKey: "AIzaSyDjK5K5K5K5K5K5K5K5K5K5K5K5K5K5K5",
-       authDomain: "kickme-chat-abc123.firebaseapp.com",
-       // ... etc
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
    };
    ```
 3. Replace **ONLY the values** with your actual Firebase credentials from Step 3
